@@ -1,0 +1,18 @@
+创建一个文件夹  mkdir /mnt/usb  
+挂载U盘  挂u盘之前，运行命令cat /proc/partitions,看看现在系统中有哪些分区。插上u盘以后，再次运行上述命令，看看多出来什么分区（通常是sda1，PS由于偶是在虚拟机下装的，所以是sdb1).
+1、插入U盘 
+ 
+2、输入 fdisk -l /dev/sda 查看输出结果，比如我的是这样的：     
+ # fdisk -l /dev/sda       
+ Disk /dev/sda: 131 MB, 131104768 bytes      
+ 3 heads, 32 sectors/track, 2667 cylinders      
+ Units = cylinders of 96 * 512 = 49152 bytes       
+  Device Boot      Start         End      Blocks   Id System    
+ /dev/sdb1   *           1        2668      128016  6 FAT16
+
+3、看了上面的输出就知道U盘所在的设备了，比如我的就是/dev/sdb1，接着便是挂载了，假设我将U盘挂载到/mnt/usb目录(没有的话，新建)中，就是 mount -t msdos /dev/sdb1 /mnt/usb 如果是fat16就使用下面的命令 mount -t msdos /dev/sdb1 /mnt/usb 如果是fat32   mount -t vfat /dev/sdb1 /mnt/usb 如果是ext2格式，就用命令： mount -t ext2 /dev/sda1 /mnt/usb
+
+4、打开/mnt/usb 就可以看到你的U盘里的东西了！ 
+   cd /mnt/usb 
+
+最简单的用法  mount /dev/hda6 /mnt/d

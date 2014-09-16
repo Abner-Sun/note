@@ -1,0 +1,42 @@
+常见的字节序
+一般操作系统都是小端，而通讯协议是大端的。
+4.1 常见CPU的字节序
+
+Big Endian : PowerPC、IBM、Sun
+Little Endian : x86、DEC
+ARM既可以工作在大端模式，也可以工作在小端模式。
+ 
+4.2 常见文件的字节序
+
+Adobe PS – Big Endian
+BMP – Little Endian
+DXF(AutoCAD) – Variable
+GIF – Little Endian
+JPEG – Big Endian
+MacPaint – Big Endian
+RTF – Little Endian
+ 
+
+
+另外，Java和所有的网络通讯协议都是使用Big-Endian的编码
+
+现代的计算机系统一般采用字节(Octet, 8 bit Byte)作为逻辑寻址单位。当物理单位的长度大于1个字节时，就要区分字节顺序(Byte Order, or Endianness)。常见的字节顺序有两种：Big Endian(High-byte first)和Little Endian(Low-byte first)，这就是表1中的BE和LE。Intel X86平台采用Little-Endian，而PowerPC处理器则采用了Big-Endian。
+大端Big-Endian
+
+    低地址存放最高有效位（MSB），既高位字节排放在内存的低地址端，低位字节排放在内存的高地址端。举例如下，内存中的数据存储有低地址向高地址排列如下 0x0A 0x0B 0x0C 0x0D，则在Big-Endian字节序下，装载到寄存器内表示为0x0A0B0C0D
+
+计算机体系结构中一种描述多字节存储顺序的术语，在这种机制中最高有效位（MSB）存放在最低端的地址上。采用这种机制的处理器有IBM3700系列、PDP-10、Motorola微处理器系列和绝大多数的RISC处理器。
+
+小端Little-Endian
+
+低地址存放最低有效位（LSB），既低位字节排放在内存的低地址端，高位字节排放在内存的高地址端。举例如下，内存中的数据存储有低地址向高地址排列如下 0x0A 0x0B 0x0C 0x0D，则在Little-Endian字节序下，装载到寄存器内表示为0x0D0C0B0A
+
+计算机体系结构中一种描述多字节存储顺序的术语，在这种机制中最不重要字节（LSB）存放在最低端的地址上。采用这种机制的处理器有PDP-11、VAX、Intel系列微处理器和一些网络通信设备。该术语除了描述多字节存储顺序外还常常用来描述一个字节中各个比特的排放次序。
+
+目前PC使用的CPU都是基于X86架构的处理器，这一系列的处理器在存储数据时采用的Little Endian的格式，所以对于16位CPU来说count[0]的内容是0x0908即10进制的152、count[1]的内容是0x0706即十进制的118；而对于32位CPU来说，count[0]的内容是0x09080706转换为十进制就是151521030，count[1]的内容因为未做初始化，是未知的。
+
+如果使用的Power系列使用Big Endian的处理器那么结果对于16位CPU来说count[0]的内容是0x0607即10进制的103、count[1]的内容是0x0809即十进制的137；而对于32位CPU来说，count[0]的内容是0x06070809转换为十进制就是101124105，count[1]的内容因为未做初始化，是未知的。
+所以回答这道题必须在明确的环境条件限制下才能有准确的答案，即必须明确CPU的位数和使用什么样的字节序，否则无法给出答案
+
+
+

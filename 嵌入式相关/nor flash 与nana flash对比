@@ -1,0 +1,38 @@
+ FLASH存储器又称闪存，主要有两种：NorFlash和NandFlash，下面我们从多个角度来对比介绍一下。在实际开发中，设计者可以根据产品需求来进行闪存的合理选择。
+
+1、接口对比
+
+NorFlash带有通用的SRAM接口，可以轻松地挂接在CPU的地址、数据总线上，对CPU的接口要求低。NorFlash的特点是芯片内执行(XIP,eXecute In Place)，这样应用程序可以直接在flash闪存内运行，不必再把代码读到系统RAM中。如uboot中的ro段可以直接在NorFlash上运行，只需要把rw和zi段拷贝到RAM中运行即可。
+
+NandFlash器件使用复杂的I/O口来串行地存取数据，8个引脚用来传送控制、地址和数据信息。由于时序较为复杂，所以一般CPU最好集成NAND控制器。另外由于NandFlash没有挂接在地址总线上，所以如果想用NandFlash作为系统的启动盘，就需要CPU具备特殊的功能，如s3c2410在被选择为NandFlash启动方式时会在上电时自动读取NandFlash的4k数据到地址0的SRAM中。如果CPU不具备这种特殊功能，用户不能直接运行NandFlash上的代码，那可以采取其他方式，比如好多使用NandFlash的开发板除了使用NandFlash以外，还用上了一块小的NorFlash来运行启动代码。
+
+2、容量和成本对比
+
+相比起NandFlash来说，NorFlash的容量要小，一般在1~16MByte左右，一些新工艺采用了芯片叠加技术可以把NorFlash的容量做得大一些。在价格方面，NorFlash相比NandFlash来说较高，如目前市场上一片4Mbyte的AM29lv320 NorFlash零售价在20元左右，而一片128MByte的k9f1g08 NandFlash零售价在30元左右。
+
+NandFlash生产过程更为简单，NAND结构可以在给定的模具尺寸内提供更高的容量，这样也就相应地降低了价格。
+
+3、可靠性性对比
+
+NAND器件中的坏块是随机分布的，以前也曾有过消除坏块的努力，但发现成品率太低，代价太高，根本不划算。NAND器件需要对介质进行初始化扫描以发现坏块，并将坏块标记为不可用。在已制成的器件中，如果通过可靠的方法不能进行这项处理，将导致高故障率。而坏块问题在NorFlash上是不存在的。
+在Flash的位翻转（一个bit位发生翻转）现象上，NAND的出现几率要比NorFlash大得多。这个问题在Flash存储关键文件时是致命的，所以在使用NandFlash时建议同时使用EDC/ECC等校验算法。
+
+4、寿命对比
+
+在NAND闪存中每个块的最大擦写次数是一百万次，而NOR的擦写次数是十万次。闪存的使用寿命同时和文件系统的机制也有关，要求文件系统具有损耗平衡功能。
+
+5、升级对比
+
+NorFlash的升级较为麻烦，因为不同容量的NorFlash的地址线需求不一样，所以在更换不同容量的NorFlash芯片时不方便。通常我们会通过在电路板的地址线上做一些跳接电阻来解决这样的问题，针对不同容量的NorFlash。
+
+而不同容量的NandFlash的接口是固定的，所以升级简单。
+
+6、读写性能对比
+
+写操作：任何flash器件的写入操作都只能在空或已擦除的单元内进行。NAND器件执行擦除操作是十分简单的，而NOR则要求在进行擦除前先要将目标块内所有的位都写为1。擦除NOR器件时是以64～128KB的块进行的，执行一个擦除/写入操作的时间约为5s。擦除NAND器件是以8～32KB的块进行的，执行一个擦除/写入操作最多只需要4ms。
+
+读操作：NOR的读速度比NAND稍快一些。
+
+7、文件系统比较
+
+Linux系统中采用MTD来管理不同类型的Flash芯片，包括NandFlash和NorFlash。支持在Flash上运行的常用文件系统有cramfs、jffs、jffs2、yaffs、yaffs2等。cramfs文件系统是只读文件系统。如果想在Flash上实现读写操作，通常在NorFlash上我们会选取jffs及jffs2文件系统，在NandFlash上选用yaffs或yaffs2文件系统。Yaffs2文件系统支持大页（大于512字节/页）的NandFlash存储器。 

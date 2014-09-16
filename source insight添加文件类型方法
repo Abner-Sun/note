@@ -1,0 +1,22 @@
+大家用source insight看linux源码的时候都遇到这么一个麻烦，makefile和kconfig中的文字在搜索的时候不能找到，这是因为source insight默认是不选makefile的，也没有konfig这种类型的文件。下面就讲一下
+ 
+如何添加makefile：
+打开Source Insight，在新建工程之前，进入
+Options -> Document Options-> 点击Document Type的下拉框，然后选择Make File，在右边的File Filter中，在原先的*.mak后面加上一个分号，即多个不同过滤规则以分号间隔开，再加上*makefile，变成 *.mak;*makefile，并且选中Include when adding to projects,这样，以后再新建工程的时候（当前工程同步下makefile就有了），就可以识别makefile或Makefile了（好像此处Source Insight并不区分大小写）。
+如何添加kconfig：
+由于kconfig是sourceinsight默认不支持的格式，所以我们现在先要加入一个类型。
+点击 Add Type，填入新文件类型的名字kconfig，File Filter中写上*kconfig，最好再加上kconfig*（因为在linux中有些kconfig是以kconfig.*的形式出现），注意再选中下面的Include when adding to projects,这样就建立了一个新的文件类型， 以后新建工程加入文件时候，系统就能够识别kconfig的文件了。
+//===========================================
+
+
+
+用汇编定义了该函数的。去网上查了一下，发现原因是*.S文件并没有添加到改工程中来。 
+为了用source insight能搜索到.S的汇编文件，必须把该文件添加进来。 
+方法： 
+1、在创建工程前先特别设置好source insight 。设置如下： 
+Options->Document Options->Doucment Types->选择x86 Assemble，再在右边File Filter里输入*.S。这样以后再new一个工程，在添加文件时，就可以把文件夹中的*.S添加进去了。 
+2、如果之前已经创建好工程的，而又想把*.S文件添加进来。如下： 
+打开创建好的工程，Options->Document Options->Doucment Types->选择x86 Assemble，再在右边File Filter里输入*.S。然后project-->add and remove project files,再重新把工程的所有文件夹添加一遍，这样就可以把*.S文件添加进来了（注：原来的*.c等文件不会被重复添加），然后重新rebuild就可以了。
+
+还有，si默认的汇编文件后缀不支持.s的，所以要支持arm的汇编文件也需要改一下File filter.
+自从看到一个命令在我的手下，蹦的一下------------我就笑了

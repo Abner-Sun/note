@@ -1,0 +1,16 @@
+﻿adb 与 fastboot区别
+
+
+adb是拿来调试kernel和app的，fastboot和recovery差不多
+android引导需要三个步骤：一次引导；二次引导；然后才是android。
+
+如果是这种情况，在bootloader和android里，应该是使用不同协议和PC机通讯。假设如下：fastboot用于和bootloader通讯，而adb则是用于和android通讯。
+
+验证这个假设很简单，在引导阶段用fastboot devices，发现了手机，可以操作；正常方式开启手机，用adb devices，发现了手机，也可以操作（adb shell进入熟悉的linux控制台，呵呵）。
+
+值得一提，所谓recovery模式类似于windows安全模式，自然是用adb连接手机。
+
+结论：fastboot和adb使用注意手机的不同工作状态，fastboot对应于boot状态，adb对应于android运行状态。（网上很多文章，没有提及这点区别，估计要困惑一些新手）
+
+fastboot就是使用USB数据线连接手机的一种刷机模式。
+adb(Android Debug Bridge)是Android提供的一个通用调试工具，借助这个工具，我们可以管理设备或手机模拟器的状态。

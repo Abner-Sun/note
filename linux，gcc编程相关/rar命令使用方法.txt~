@@ -1,0 +1,6 @@
+三、rar命令语法
+将/etc 目录压缩为etc.rar 命令为：
+rar a etc.rar /etc
+将etc.rar 解压 命令为：
+rar x etc.rar 
+unrar -e etc.tar

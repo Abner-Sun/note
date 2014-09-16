@@ -1,0 +1,13 @@
+用法：#include <string.h>
+ 功能：复制字符串s
+ 
+ 说明：返回指向被复制的字符串的指针，所需空间由malloc()分配且可以由free()释放。
+
+strdup()主要是拷贝字符串s的一个副本，由函数返回值返回，这个副本有自己的内存空间，和s不相干。
+char *strdup(const char *s)
+{
+        char *t = NULL;
+        if (s && (t = (char*)malloc(strlen(s) + 1)))
+        strcpy(t, s);
+        return t;
+}  

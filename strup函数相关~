@@ -1,0 +1,10 @@
+
+
+strdup()主要是拷贝字符串s的一个副本，由函数返回值返回，这个副本有自己的内存空间，和s不相干。
+char *strdup(const char *s)
+{
+        char *t = NULL;
+        if (s && (t = (char*)malloc(strlen(s) + 1)))
+        strcpy(t, s);
+        return t;
+}  
