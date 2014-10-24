@@ -1,0 +1,309 @@
+linux中，nm用来列出目标文件的符号清单
+-a或--debug-syms：显示调试符号。
+-B：等同于--format=bsd，用来兼容MIPS的nm。
+-C或--demangle：将低级符号名解码(demangle)成用户级名字。这样可以使得C++函数名具有可读性。
+-D或--dynamic：显示动态符号。该任选项仅对于动态目标(例如特定类型的共享库)有意义。
+-f format：使用format格式输出。format可以选取bsd、sysv或posix，该选项在GNU的nm中有用。默认为bsd。
+-g或--extern-only：仅显示外部符号。
+-n、-v或--numeric-sort：按符号对应地址的顺序排序，而非按符号名的字符顺序。
+-p或--no-sort：按目标文件中遇到的符号顺序显示，不排序。
+-P或--portability：使用POSIX.2标准输出格式代替默认的输出格式。等同于使用任选项-f posix。
+-s或--print-armap：当列出库中成员的符号时，包含索引。索引的内容包含：哪些模块包含哪些名字的映射。
+-r或--reverse-sort：反转排序的顺序(例如，升序变为降序)。
+--size-sort：按大小排列符号顺序。该大小是按照一个符号的值与它下一个符号的值进行计算的。
+-t radix或--radix=radix：使用radix进制显示符号值。radix只能为“d”表示十进制、“o”表示八进制或“x”表示十六进制。
+--target=bfdname：指定一个目标代码的格式，而非使用系统的默认格式。
+-u或--undefined-only：仅显示没有定义的符号(那些外部符号)。
+-l或--line-numbers：对每个符号，使用调试信息来试图找到文件名和行号。对于已定义的符号，查找符号地址的行号。对于未定义符号，查找指向符号重定位入口的行号。如果可以找到行号信息，显示在符号信息之后。
+-V或--version：显示nm的版本号。
+--help：显示nm的任选项。
+
+
+
+
+
+
+objdump后发现很多option,现拿几种常用选项作说明并介绍其用法：
+
+--archive-headers
+-a 显示档案库的成员信息，与 ar tv 类似
+
+     objdump -a libpcap.a
+     和 ar -tv libpcap.a 显示结果比较比较
+     显然这个选项没有什么意思。
+
+--adjust-vma=offset
+     When   dumping   information, first add offset to all
+     the section addresses.   This is useful if the   sec-
+     tion   addresses   do   not correspond   to the symbol
+     table, which can happen when   putting   sections   at
+     particular   addresses when using a format which can
+     not represent section addresses, such as a.out.
+
+-b bfdname
+--target=bfdname
+     指定目标码格式。这不是必须的，objdump能自动识别许多格式，
+     比如：objdump -b oasys -m vax -h fu.o
+     显示fu.o的头部摘要信息，明确指出该文件是Vax系统下用Oasys
+     编译器生成的目标文件。objdump -i将给出这里可以指定的
+     目标码格式列表
+
+--demangle
+-C 将底层的符号名解码成用户级名字，除了去掉所有开头
+    的下划线之外，还使得C++函数名以可理解的方式显示出来。
+
+--debugging
+     显示调试信息。企图解析保存在文件中的调试信息并以C语言
+     的语法显示出来。仅仅支持某些类型的调试信息。
+
+--disassemble
+-d 反汇编那些应该还有指令机器码的section
+
+--disassemble-all
+-D 与 -d 类似，但反汇编所有section
+
+--prefix-addresses
+     反汇编的时候，显示每一行的完整地址。这是一种比较老的反汇编格式。
+     显示效果并不理想，但可能会用到其中的某些显示，自己可以对比。
+
+--disassemble-zeroes
+     一般反汇编输出将省略大块的零，该选项使得这些零块也被反汇编。
+
+-EB
+-EL
+--endian={big|little}
+     这个选项将影响反汇编出来的指令。
+     little-endian就是我们当年在dos下玩汇编的时候常说的高位在高地址，
+     x86都是这种。
+
+--file-headers
+-f 显示objfile中每个文件的整体头部摘要信息。
+
+--section-headers
+--headers
+-h 显示目标文件各个section的头部摘要信息。
+
+--help 简短的帮助信息。
+
+--info
+-i 显示对于 -b 或者 -m 选项可用的架构和目标格式列表。
+
+--section=name
+-j name 仅仅显示指定section的信息
+
+--line-numbers
+-l 用文件名和行号标注相应的目标代码，仅仅和-d、-D或者-r一起使用
+    使用-ld和使用-d的区别不是很大，在源码级调试的时候有用，要求
+    编译时使用了-g之类的调试编译选项。
+
+--architecture=machine
+-m machine
+     指定反汇编目标文件时使用的架构，当待反汇编文件本身没有描述
+     架构信息的时候(比如S-records)，这个选项很有用。可以用-i选项
+     列出这里能够指定的架构
+
+--reloc
+-r 显示文件的重定位入口。如果和-d或者-D一起使用，重定位部分以反汇
+    编后的格式显示出来。
+
+--dynamic-reloc
+-R 显示文件的动态重定位入口，仅仅对于动态目标文件有意义，比如某些
+    共享库。
+
+--full-contents
+-s 显示指定section的完整内容。
+
+     objdump --section=.text -s inet.o | more
+
+--source
+-S 尽可能反汇编出源代码，尤其当编译的时候指定了-g这种调试参数时，
+    效果比较明显。隐含了-d参数。
+
+--show-raw-insn
+     反汇编的时候，显示每条汇编指令对应的机器码，除非指定了
+     --prefix-addresses，这将是缺省选项。
+
+--no-show-raw-insn
+     反汇编时，不显示汇编指令的机器码，这是指定 --prefix-addresses
+     选项时的缺省设置。
+
+--stabs
+     Display the contents of the .stab, .stab.index, and
+     .stab.excl sections from an ELF file.   This is only
+     useful   on   systems   (such as Solaris 2.0) in which
+     .stab debugging symbol-table entries are carried in
+     an ELF section.   In most other file formats, debug-
+     ging   symbol-table   entries   are interleaved   with
+     linkage symbols, and are visible in the --syms output.
+
+--start-address=address
+     从指定地址开始显示数据，该选项影响-d、-r和-s选项的输出。
+
+--stop-address=address
+     显示数据直到指定地址为止，该选项影响-d、-r和-s选项的输出。
+
+--syms
+-t 显示文件的符号表入口。类似于nm -s提供的信息
+
+--dynamic-syms
+-T 显示文件的动态符号表入口，仅仅对动态目标文件有意义，比如某些
+    共享库。它显示的信息类似于 nm -D|--dynamic 显示的信息。
+
+--version 版本信息
+
+     objdump --version
+
+--all-headers
+-x 显示所有可用的头信息，包括符号表、重定位入口。-x 等价于
+    -a -f -h -r -t 同时指定
+
+
+
+
+readelf用来显示一个或者多个elf格式的目标文件的信息，可以通过它的选项来控制显示哪些信息。这里的elf-file(s)就表示那些被检查的文件。可以支持32位，64位的elf格式文件，也支持包含elf文件的文档（这里一般指的是使用ar命令将一些elf文件打包之后生成的例如lib*.a之类的“静态库”文件）。 
+
+这个程序和objdump提供的功能类似，但是它显示的信息更为具体，并且它不依赖BFD库(BFD库是一个GNU项目，它的目标就是希望通过一种统一的接口来处理不同的目标文件)，所以即使BFD库有什么bug存在的话也不会影响到readelf程序。 
+
+readelf命令是Linux下的分析ELF文件的命令，这个命令在分析ELF文件格式时非常有用，下面以ELF格式可执行文件test为例详细介绍：
+
+
+readelf -v
+
+显示版本
+
+
+readelf -h
+
+显示帮助
+
+
+readelf -a test
+
+显示test的全部信息
+
+
+readelf -h test
+
+显示test的ELF Header的文件头信息（就是ELF文件开始的前52个字节）
+
+
+readelf -l test
+
+显示test的Program Header Table中的每个Prgram Header Entry的信息（如果有）
+
+
+readelf -S test
+
+显示test的Section Header Table中的每个Section Header Entry的信息（如果有）
+
+
+readelf -g test
+
+显示test的Section Group的信息（如果有）
+
+
+readelf -s test
+显示test的Symbol Table中的每个Symbol  Table Entry的信息（如果有）
+
+
+readelf -e test
+
+显示test的全部头信息（包括ELF Header，Section Header和Program Header，等同与 readelf -h -l -S test）
+
+
+
+readelf -n test
+
+显示test的note段的信息（如果有）
+readelf命令是Linux下的分析ELF文件的命令，这个命令在分析ELF文件格式时非常有用，下面以ELF格式可执行文件test为例详细介绍：
+
+
+readelf -v
+
+显示版本
+
+
+readelf -h
+
+显示帮助
+
+
+readelf -a test
+
+显示test的全部信息
+
+
+readelf -h test
+
+显示test的ELF Header的文件头信息（就是ELF文件开始的前52个字节）
+
+
+readelf -l test
+
+显示test的Program Header Table中的每个Prgram Header Entry的信息（如果有）
+
+
+readelf -S test
+
+显示test的Section Header Table中的每个Section Header Entry的信息（如果有）
+
+
+readelf -g test
+
+显示test的Section Group的信息（如果有）
+
+
+readelf -s test
+显示test的Symbol Table中的每个Symbol  Table Entry的信息（如果有）
+
+
+readelf -e test
+
+显示test的全部头信息（包括ELF Header，Section Header和Program Header，等同与 readelf -h -l -S test）
+
+
+
+readelf -n test
+
+显示test的note段的信息（如果有）
+
+
+
+readelf -r test
+
+显示test中的可重定位段的信息（如果有）
+
+
+
+readelf -d test
+
+显示test中的Dynamic Section的信息（如果有）
+
+
+
+readelf -V test
+
+显示test中的GNU Version段信息（如果有）
+
+
+
+
+
+readelf -r test
+
+显示test中的可重定位段的信息（如果有）
+
+
+
+readelf -d test
+
+显示test中的Dynamic Section的信息（如果有）
+
+
+
+readelf -V test
+
+显示test中的GNU Version段信息（如果有）
+
+
+

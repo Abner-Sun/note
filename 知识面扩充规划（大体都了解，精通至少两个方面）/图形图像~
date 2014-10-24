@@ -1,0 +1,49 @@
+图形图像架构：
+
+
+计算机图形学各个领域的目标或许不同，但最终的形式都是渲染(即绘制)在二维的显示设备上的图像。下面是一个简单（可能并不完全）的分类：
+计算机图形学-领域及分支：
+1 绘制
+1.1 真实感绘制(非实时)
+1.1.1 光线追踪(Ray-tracing)
+1.1.2 全局光照(Global Illumination)
+......
+1.2 实时绘制
+1.2.1 Shading(BRDF, Programmable Shading等)
+1.2.2 纹理(Texture Synthesis, 反走样, 采样等)
+1.2.3 阴影和环境光照(Ambient Occlusion, Shadow Volume等)
+1.2.4 基于图像的算法(HDR, Depth of Field, Motion Blur等)
+1.2.5 光照算法(PRT, 球面谐波(Spherical Harmonic)等)
+......
+2 建模
+2.1 曲面/曲线(Bézier曲线, B样条(B-Spline), 细分曲面(Subdivision Surface/Tessellation))
+2.2 网格(Mesh)及形变(Morphing)
+2.3 模型修复及重建(计算机视觉交叉方向)
+......
+3 物理模拟
+3.1 刚体碰撞模拟
+3.2 流体模拟(烟 火 水)
+3.3 柔体模拟(布料 头发 皮肤 橡胶等)
+......
+4 动画（google动画）
+4.1 关键帧技术(keyframe)
+4.2 基于物理的动画(Human motion capture, character animation等)
+......
+5 科学计算可视化
+5.1 标量场可视化(Isosurface和体绘制 Raycasting等)
+5.2 矢量场可视化(Flow visualization等)
+5.3 信息可视化(如Social-Network Link Graph等)
+......
+6 延展和相关领域
+6.1 图形硬件和GPU Computing(利用GPU进行普适的并行计算)
+6.2 计算摄影学Computational Photography(图像处理和图形学的结合)
+6.3 计算机视觉Computer Vision(是计算机图形学的逆向学科 如何从二维图像和视频中提取三维空间信息和内容理解)
+    主要指机器视觉，主题是图像序列到3D模型转换如：多目视觉，运动视觉等，本来应该归到模式识别类里面
+6.4 大规模数据分析(大规模数据的可视化及物理模拟 如天气 洋流 社交网络信息等)
+6.5 游戏引擎(是实时绘制+建模+物理模拟+动画的集合体)
+6.6 电影动画及特效(是真实感绘制+建模+物理模拟+动画+计算机视觉等的集合体)
+6.7 编译器及编程模型(GPU Shading Language语言设计及并行编程模型)
+6.8 图像和模式识别领域的前沿有： 图像处理 图像压缩 图像分割 边沿检测 图像矢量化 图像匹配 模式识别 遥感图像
+    处理图像恢复 视频处理
+6.9 虚拟现实和虚拟现实设备（如：空间全息成像，触觉传感器，嗅觉传感器，立体声学，空间定位设备）
+

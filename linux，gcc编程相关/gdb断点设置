@@ -1,0 +1,54 @@
+ gdb break 断点设置（一）
+
+二、断点设置
+gdb断点分类：
+以设置断点的命令分类：
+breakpoint
+可以根据行号、函数、条件生成断点。
+watchpoint
+监测变量或者表达式的值发生变化时产生断点。
+catchpoint
+监测信号的产生。例如c++的throw，或者加载库的时候。
+gdb中的变量从1开始标号，不同的断点采用变量标号同一管理，可以 用enable、disable等命令管理，同时支持断点范围的操作，比如有些命令接受断点范围作为参数。
+例如：disable 5-8
+ 
+1、break及break变种详解：
+相关命令有break，tbreak，rbreak,hbreak，thbreak，后两种是基于硬件的，先不介绍。
+>>break 与 tbeak
+break，tbreak可以根据行号、函数、条件生成断点。tbreak设置方法与break相同，只不过tbreak只在断点停一次，过后会自动将断点删除，break需要手动控制断点的删除和使能。
+break 可带如下参数：
+linenum                 本地行号，即list命令可见的行号
+filename:linenum  制定个文件的行号
+function                函数，可以是自定义函数也可是库函数，如open
+filename:function  制定文件中的函数
+condtion                条件
+ 
+*address      地址，可是函数，变量的地址，此地址可以通过info add命令得到。
+例如：
+break 10    
+break test.c:10
+break main
+break test.c:main
+break system
+break open
+如果想在指定的地址设置断点，比如在main函数的地址出设断点。
+可用info add main 获得main的地址如0x80484624，然后用break *0x80484624.
+条件断点就是在如上述指定断点的同时指定进入断点的条件。
+例如：（假如有int 类型变量 index）
+break 10 if index == 3
+tbreak 12 if index == 5
+>>rbreak
+rbreak 可以跟一个规则表达式。rbreak + 表达式的用法与grep + 表达式相似。即在所有与表达式匹配的函数入口都设置断点。
+ 
+rbreak list_* 即在所有以 list_ 为开头字符的函数地方都设置断点。
+rbreak ^list_ 功能与上同。
+>>查看断点信息
+info break [break num ]
+info break 可列出所有断点信息，info break 后也可设置要查看的break num如：
+info break 1 列出断点号是1的断点信息
+     Num     Type           Disp Enb  Address    What
+     1       breakpoint     keep y    <MULTIPLE>
+             stop only if i==1
+             breakpoint already hit 1 time
+     1.1                         y    0x080486a2 in void foo<int>() at t.cc:8
+     1.2                         y    0x080486ca in void foo<double>() at t.cc:8
