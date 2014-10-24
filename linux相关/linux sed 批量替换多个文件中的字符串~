@@ -1,7 +1,0 @@
-linux sed 批量替换多个文件中的字符串
-
-sed -i "s/oldstring/newstring/g" `grep oldstring -rl yourdir` //注意是grep前是斜点，不是单引号
-
-例如：替换/home下所有文件中的www.bcak.com.cn为bcak.com.cn
-
-sed -i "s/www.bcak.com.cn/bcak.com.cn/g" `grep www.bcak.com.cn -rl /home`
