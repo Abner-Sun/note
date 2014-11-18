@@ -1,0 +1,16 @@
+	以下是有关Vxworks内核影像有关 文件系统和RTP进程打开文件数限制的宏定义路径。
+
+1.  NUM_FILES在内核影像工程中得路径如下：
+    Kernel configuration -> operating system components ->IO system components -> IO Subsystem Components -> Basic IO system ->NUM_FILES
+
+2.  DOSFS_DEFAULT_MAX_FILES在内核影像工程中得路径如下：
+    Kernel configuration -> operating system components ->IO system components -> dosFs file system components ->  dosFs file system main module -> DOSFS_DEFAULT_MAX_FILES
+
+3.  NUM_RAWFS_FILES在内核影像工程中得路径如下：
+    Kernel configuration -> operating system components ->IO system components -> raw filesystem -> NUM_RAWFS_FILES
+
+4.  RTP_FD_NUM_MAX在内核影像工程中得路径如下：
+    
+    Kernel configuration -> operating system components ->real time process components -> RTP(default) -> RTP_FD_NUM_MAX
+
+其中，第1和第4条尤为重要。
