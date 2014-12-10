@@ -22,3 +22,9 @@ GNU tar的用法[编辑]
 -J，--xz，--lzma 调用XZ Utils执行压缩或解压缩。依赖XZ Utils。
 -z，--gzip，--gunzip，--ungzip 调用gzip执行压缩或解压缩
 -Z，--compress，--uncompress 调用compress执行压缩或解压缩
+
+-C, --directory DIR
+              change to directory DIR
+-C 是变更解压的目标目录，默认是当前目录。tar vxfj /mnt/hgfs/linux/xxx.tar.bz2 -C / 中是解压到根目录
+
+注意：当tar源压缩包用得是绝对路径时 一定要用-C来改变解压缩得默认目标路径，否则，就会解压缩到调用tar的程序的当前工作目录下

@@ -1,0 +1,9 @@
+ GLEW是一个跨平台的C++扩展库，基于OpenGL图形接口。使用OpenGL的朋友都知道，window目前只支持OpenGL1.1的涵数，但 OpenGL现在都发展到2.0以上了，要使用这些OpenGL的高级特性，就必须下载最新的扩展，另外，不同的显卡公司，也会发布一些只有自家显卡才支 持的扩展函数，你要想用这数涵数，不得不去寻找最新的glext.h,有了GLEW扩展库，你就再也不用为找不到函数的接口而烦恼，因为GLEW能自动识 别你的平台所支持的全部OpenGL高级扩展涵数。也就是说，只要包含一个glew.h头文件，你就能使用gl,glu,glext,wgl,glx的全 部函数。GLEW支持目前流行的各种操作系统（including Windows, Linux, Mac OS X, FreeBSD, Irix, and Solaris）。
+
+glu是实用库，包含有43个函数，函数名的前缀为glu。Glu 为了减轻繁重的编程工作，封装了OpenGL函数，Glu函数通过调用核心库的函数，为开发者提供相对简单的用法，实现一些较为复杂的操作。
+glaux是OpenGL辅助库，包含有31个函数，函数名前缀为aux。这部分函数提供窗口管理、输入输出处理以及绘制一些简单三维物体。
+
+glut是实用工具库，基本上是用于做窗口界面的，并且是跨平台（所以有时你喜欢做简单的demo的话，可以光用glut就ok了）
+
+GLX:OpenGL extension for X.
+对于X窗口系统，它所使用的的OpenGL扩展（GLX）是作为OpenGL的一个附件提供的，所有的GLX函数都使用前缀glX
