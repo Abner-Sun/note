@@ -1,0 +1,14 @@
+方法四：在当前的shell环境中执行bash shell脚本：
+复制代码 代码如下:
+
+cd /data/shell
+. hello.sh
+
+或
+复制代码 代码如下:
+
+cd /data/shell
+source hello.sh
+
+之前方法执行shell脚本时都是在当前shell（称为父shell）开启一个子shell环境，此shell脚本就在这个子shell环境中执行。shell脚本执行完后子shell环境随即关闭，然后又回到父shell中。而方法四则是在当前shell中执行的。
+注意，用shell脚本来设置环境变量时，尤其要注意此。
