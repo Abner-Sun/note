@@ -5,3 +5,9 @@ sed -i "s/oldstring/newstring/g" `grep oldstring -rl yourdir` //注意是grep前
 例如：替换/home下所有文件中的www.bcak.com.cn为bcak.com.cn
 
 sed -i "s/www.bcak.com.cn/bcak.com.cn/g" `grep www.bcak.com.cn -rl /home`
+
+
+
+sed -i "s/mysql/rtedb/g" `grep mysql -rl ./`
+sed -i "s/MYSQL/RTEDB/g" `grep MYSQL -rl ./`
+sed -i "s/Mysql/Rtedb/g" `grep Mysql -rl ./`
