@@ -1,0 +1,30 @@
+ 一、变量分类
+局部变量和环境变量，局部变量只适用于当前shell，而环境变量是全局的，它适用于所有当前shell以及其派生出来的任意子进程，有些变量是用户创建的，其他的则是专用的shell变量。
+二、局部变量
+局部变量的作用域被限定在创建它们的shell中。local函数可以用来创建局部变量，但仅限于函数内使用。
+
+注意：
+	1、函数内是可以访问全局变量，并且对全局变量的修改会真正改变全局变量的值。
+	2、函数内定义的变量也是全局变量，也就是说函数外可以访问。即要想定义局部变量，必须加local声明。
+
+
+
+环境变量按生存周期可分为：
+1. 永久的：需要修改配置文件，export变量永久生效。
+2. 临时的：使用export命令行声明即可，变量在关闭shell时失效。
+2.设置变量的三种方法
+1) 在/etc/profile文件中添加变量【对所有用户生效(永久的)】
+用VI在文件/etc/profile文件中增加变量，该变量将会对Linux下所有用户有效，并且是“永久的”。
+例如：编辑/etc/profile文件，添加CLASSPATH变量
+# vi /etc/profile
+export CLASSPATH=./JAVA_HOME/lib;$JAVA_HOME/jre/lib
+注：修改文件后要想马上生效还要运行# source /etc/profile不然只能在下次重进此用户时生效。
+2) 在用户目录下的.bash_profile文件中增加变量【对单一用户生效(永久的)】
+用VI在用户目录下的.bash_profile文件中增加变量，改变量仅会对当前用户有效，并且是“永久的”。
+例如：编辑guok用户目录(/home/guok)下的.bash_profile
+$ vi /home/guok/.bash.profile
+添加如下内容：
+export CLASSPATH=./JAVA_HOME/lib;$JAVA_HOME/jre/lib
+注：修改文件后要想马上生效还要运行$ source /home/guok/.bash_profile不然只能在下次重进此用户时生效。
+3) 直接运行export命令定义变量【只对当前shell(BASH)有效(临时的)】
+在shell的命令行下直接使用[export变量名=变量值]定义变量，该变量只在当前的shell(BASH)或其子shell(BASH)下是有效的，shell关闭了，变量也就失效了，再打开新shell时就没有这个变量，需要使用的话还需要重新定义。
