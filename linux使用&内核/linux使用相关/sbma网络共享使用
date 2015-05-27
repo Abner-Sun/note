@@ -1,0 +1,29 @@
+SAMBA 用户管理
+
+在需要密码登录时有效，在设置用户密码时，此用户必须是LINUX系统的用户，如下面的指令 user 必须先是系统的用户
+
+sudo smbpasswd -a user
+接下来根据提示输入两次密码即可
+
+smbpasswd 指令相关参数如下：
+
+－a    新添加一个Samba用户。
+－d    禁用一个Samba用户。
+－e    使禁用的Samba用户解禁。
+
+
+启动 SAMBA 服务
+
+复制代码
+# 停止 SAMBA 服务
+sudo /etc/init.d/smbd stop
+# 启动 SAMBA 服务
+sudo /etc/init.d/smbd start
+# 重新启动
+sudo /etc/init.d/smbd restart
+复制代码
+
+在 WINDOWS 下访问共享目录
+
+# 在资源管理器，或浏览器中直接输入即可， “192.168.1.10” 为服务器 IP
+\\192.168.1.10
