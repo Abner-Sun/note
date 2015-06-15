@@ -1,0 +1,405 @@
+事件
+一个叫"XEvent"的结构来保存从X服务器那里接受到的事件。Xlib提供了非常大量的事件类型。XEvent包括事件的类型，以及与事件相关的数据（例如在屏幕什么地方生成的事件，鼠标键的事件等等），因此，要根据事件类型来读取相应的事件里的数据。这时，XEvent结构使用c语言里的联合来保存可能的数据（如果你搞不清楚c的联合是怎么回事，那你就得花点时间再读读你的教科书了）。结果，我们就可能受到XExpose事件，一个XButton事件，一个XMotion事件等等。
+
+
+10.X 事件
+
+在Xlib程序中，所有的事情都是被事件驱动的。事件绘图有时是对事件－一个”暴露的“事
+件－的反应。如果程序窗口被隐藏的一部分重又暴露了(例如窗口从另外一个窗口后面升上
+来了)，X服务器将发送一个”暴露的“事件让程序知道它应当重新画处窗口的这个部分。用
+户输入(按键，鼠标移动，等)也是作为一套事件被接收的。
+
+1>.使用事件遮罩给事件型别注册
+
+在程序创建了一个窗口(或者几个窗口)之后，它应当告诉X服务器它想让这个窗口接收什么
+型别的事件。缺省的，没有事件发送给程序。它可能注册各种鼠标(也被称为”指针“)事件
+，键盘事件，暴露事件等等。这是用于优化服务器和客户之间的连接(也就是，为什么要发
+送给程序(那可能是运行于地球的另外一边的)它不感兴趣的事件的？)。
+在Xlib中，我们使用XSelectInput()函数来注册事件。这个函数接收3个参数 － display结
+构，窗口的ID，以及它想要收到的事件型别的遮罩。窗口ID这个参数使得我们能够为不同的
+窗口注册接收不同型别的事件。这儿是我们如何给ID为‘win’的窗口注册”暴露”事件的
+：
+XSelectInput(display, win, ExposureMask);
+ExposureMask 是定义在头文件“X.h”中的常量。如果我们想要注册好几种事件型别，我们
+用逻辑或进行连接，如下：
+XSelectInput(display, win, ExposureMask | ButtonPressMask);
+遮注册了“暴露”事件以及鼠标按钮在给定窗口按下的事件。你应当注意到一个遮罩有可能
+代表了好几种事件子型别。
+注意：一个常见的蹩脚程序员所作的是在它们的程序中添加代码来处理新的事件型别，而忘
+记了在调用XSelectInput()中添加这些事件的遮罩。这样的程序员然后坐下来花数个小时调
+试它们的程序，奇怪于“为什么我的程序没注意到我释放鼠标？？”，最后只是发现它们忘
+记了只注册鼠标按下事件，而不是鼠标释放事件。
+
+2>.接收事件－撰写事件循环
+在我们为感兴趣的事件型别注册了之后，我们需要进入接收事件和处理它们的循环。有好几
+种撰写这样的循环的办法，但基本的循环是这样的：
+/* this structure will contain the event's data, once received. */
+XEvent an_event;
+/* enter an "endless" loop of handling events. */
+while (1) {
+    XNextEvent(display, &an_event);
+    switch (an_event.type) ｛
+      case Expose:
+        /* handle this event type... */
+        .
+        .
+        break;
+      default: /* unknown event type - ignore it. */
+        break;
+    }
+}
+XNextEvent()函数取得从X服务器发送来的下一个事件。如果没有事件在等待，它阻塞在那
+知道接收到了一个。当它返回了，事件的数据被放置给函数的第二个参数XEvent变量中。之
+后，变量的“type”域指定了我们得到的事件的型别。事件的型别是Expose告诉我们窗口的
+一部分布需要重画。在我们处理了事件之后，我们回过头来继续等待下一个要处理的。明显
+，我们需要给用户某种终止程序的途径。如我们即将看到的，这通常是通过处理“quit”事
+件来完成那个的。
+3>.暴露事件
+“暴露”事件是程序可能接收的最基本的事件中的一个。它在一下情况中将发送给我们：
+    * 覆盖我们一部分窗口的窗口被移开了，暴露我们窗口的部分(或者全部)。
+    * 我们的窗口从其他窗口后面升上来了
+    * 我们的窗口第一次映射
+    * 我们的窗口被取消标识了。
+你应当注意背后隐藏的假设 － 我们窗口的内容在被其他窗口遮盖时候丢失了。你可能奇怪
+X服务器为什么不保存这些内容。答案是 － 为了节省内存。毕竟，窗口在display上的数量
+在给定时间是非常巨大的，而且保存它们的所有内容可能需要很多的内存(例如，大小为400
+*400象素的256色位图占据160KB的内存存储。现在想想20个窗口，比这个数字要大得多)。
+事实上，在特殊情况下有告诉X服务器保存窗口内容的办法，我们将在后面看到。
+
+当我们得到一个“暴露”事件的时候，我们应当从XEvent结构的"xexpose“成员处取出事件
+的数据(在我们的代码例子中用”an_event.xexpose“引用它)。它包含几个有趣的域：
+count
+    在服务器中的事件队列等待的其他暴露事件的数量。这个可能在我们一次接连得到好几
+个的时候有用 － 我们通常将避免重画知道我们得到它们的最后一个(也就是知道count为0
+的时候)。
+Window window
+    暴露事件被发送的窗口的ID(如果我们的程序在几个窗口中注册事件)。
+int x, y
+    需要重画的窗口区域的从窗口左上角开始的x和y坐标(象素为单位)。
+int width, height
+    需要重画的窗口区域的宽和高(象素为单位)。
+在我们的演示程序中，我们将倾向于忽略提供的区域，而仅仅重画整个屏幕。然而，这是非
+常没有效率的，而且我们将尝试在后面演示一些仅仅画出相关屏幕部分的技术。
+
+作为例子，这是我们将如何横跨我们的窗口画一条线，每当我们接收到”暴露“事件的时候
+。假设这个’case‘是事件循环switch语句的一部分。
+
+  case Expose:
+    /* if we have several other expose events waiting, don't redraw. */
+    /* we will do the redrawing when we receive the last of them.    */
+    if (an_event.xexpose.count > 0)
+        break;
+    /* ok, now draw the line... */
+    XDrawLine(display, win, gc, 0, 100, 400, 100);
+    break;
+4>.获得用户输入
+传统上用户输入有两个来源 － 鼠标和键盘。存在多种事件型别来通知我们用户的输入 －
+ 键盘上的按键被按下，在键盘上释放按键，鼠标移动于我们的窗口之上，鼠标进入(或者离
+开)我们的窗口等等。
+鼠标按钮点击和释放事件
+我们将要处理的第一个事件型别是在我们窗口中鼠标按钮按下(或者按键放开)事件。为了注
+册这样的一个事件，我们将添加一下遮罩中一个(或者更多)来在XSelectInput()函数中指定
+事件型别：
+ButtonPressMask
+    Notify us of any button that was pressed in one of our windows.
+ButtonReleaseMask
+    Notify us of any button that was released over one of our windows.
+
+The event types to be checked for in our event-loop switch, are any of the follo
+wing:
+
+ButtonPress
+    A button was pressed over one of our windows.
+ButtonRelease
+    A button was released over one of our windows.
+这些事件型别的事件结构是通过"an_event.xbutton“来访问的，并且包括一下有趣的域：
+
+Window window
+    鼠标事件发送给的窗口ID(如果我们的程序在几个窗口中注册了事件)。
+int x, y
+    在点击时，鼠标指针从窗口左上角为原点的x和y坐标(象素为单位)。
+int button
+    被点击的鼠标按钮的编号。可能是像Button1, Button2, Button3这样的值。
+Time time
+    事件发生的时间(毫秒为单位)。可能用于在程序中计算”双击“的情况(例如，如果鼠
+标按钮在小于给定时间内被点击两次，就认定这个为双击)。
+
+作为例子，这儿是我们如何每当接收到”鼠标按下“事件时，当按下的是第一个鼠标按钮的
+时候在鼠标点击位置画一个黑点的，而是第二个的时候擦除该点(也就是画个白点)。我们假
+定存在两个GC，gc_draw设置为前景色为黑，而gc_erase前景色为白。
+假定一下'case’是事件循环的swtich语句的一部分。
+
+  case ButtonPress:
+    /* store the mouse button coordinates in 'int' variables. */
+    /* also store the ID of the window on which the mouse was */
+    /* pressed.                                               */
+    x = an_event.xbutton.x;
+    y = an_event.xbutton.y;
+    the_win = an_event.xbutton.window;
+
+    /* check which mouse button was pressed, and act accordingly. */
+    switch (an_event.xbutton.button) {
+        case Button1:
+            /* draw a pixel at the mouse position. */
+            XDrawPoint(display, the_win, gc_draw, x, y);
+            break;
+        case Button2:
+            /* erase a pixel at the mouse position. */
+            XDrawPoint(display, the_win, gc_erase, x, y);
+            break;
+        default: /* probably 3rd button - just ignore this event. */
+            break;
+    }
+    break;
+
+鼠标移动事件
+
+与鼠标按下和释放事件类似，我们也可以得到各种鼠标移动事件的通知。这些能够划分为两
+类。一类是按钮没有被按下时鼠标指针的移动，而第二类时当一个或者多个按钮被按下的时
+候鼠标指针的移动(这有时被称为“鼠标托放操作”，或者仅仅“拖放”)。下面的事件遮罩
+可以加到XSelectInput()的调用中以让我们的应用程序得到这些事件的通知。
+
+指针移动遮罩
+    当没有鼠标按钮被按下时，由程序控制的窗口中的一个的指针移动的事件
+按钮移动遮罩
+    当鼠标的一个(或者更多)的鼠标按钮被按下的时候指针移动的事件。
+按钮1移动遮罩
+    核按钮移动遮罩一样，只不过当第一个鼠标按钮被按下的时候。
+鼠标2移动遮罩，鼠标3移动遮罩，鼠标4移动遮罩，鼠标5移动遮罩
+    类似的，用于第二个鼠标按钮，或者第三，第四，第五。
+在我们的事件循环swtich语句中要检查的事件型别，是以下的任何一个：
+
+移动通知
+    在我们需要得到这个消息通知的窗口中移动的鼠标指针。
+
+这些事件型别的事件结构是以”an_event.xbutton“来访问的，并且包含一下有趣的域：
+
+Window window
+    鼠标移动事件发送给的窗口的ID(如果我们的应用程序给几个窗口注册了事件)。
+int x, y
+    事件发生的时候，以窗口的左上角为原点鼠标指针所位于的x和y坐标(象素为单位)。
+unsigned int state
+    按钮(或者按键)在事件发生时按下的遮罩 － 如果有的话。改域是以下值的位或：
+  # Button1Mask
+  # Button2Mask
+  # Button3Mask
+  # Button4Mask
+  # Button5Mask
+  # ShiftMask
+  # LockMask
+  # ControlMask
+  # Mod1Mask
+  # Mod2Mask
+  # Mod3Mask
+  # Mod4Mask
+  # Mod5Mask
+    它们的名字是可以自明的，前五个是指被按下的鼠标按钮，而剩下的指的是被按下的“
+特殊按键”(Mod1通常是‘ALT’或者‘META’键)。
+Time time
+    事件发生所处的事件(毫秒为单位)。
+作为例子，以下的代码处理一个绘图程序的“绘图模式”，也就是说如果用户在鼠标1键按
+下的时候移动了，那么我们在屏幕上“绘图”。注意代码有一个惯性：因为鼠标移动可能产
+生许多事件，可能我们不会在每个鼠标移到的点都得到鼠标移动事件。我们的程序应当能够
+处理这么一个情况。解决的一个办法可能是记住鼠标托过的上一个点，并在和新的鼠标指针
+位置之间画直线。假定下面的‘case’是事件循环的switch语句的一部分。
+
+
+  case MotionNotify:
+    /* store the mouse button coordinates in 'int' variables. */
+    /* also store the ID of the window on which the mouse was */
+    /* pressed.                                               */
+    x = an_event.xmotion.x;
+    y = an_event.xmotion.y;
+    the_win = an_event.xbutton.window;
+
+    /* if the 1st mouse button was held during this event, draw a pixel */
+    /* at the mouse pointer location.                                   */
+    if (an_event.xmotion.state & Button1Mask) {
+        /* draw a pixel at the mouse position. */
+        XDrawPoint(display, the_win, gc_draw, x, y);
+    }
+    break;
+
+鼠标指针进入和离开事件
+
+另一个应用程序可能感兴趣的事件型别，是鼠标指针进入或者离开程序控制的窗口。一些程
+序使用这些事件来向用户展示应用程序现在在焦点状态。为了注册这么一个事件型别，我们
+将把下面的一个(或者多个)遮罩添加到我们给XSelectInput()函数指定的事件型别中：
+
+EnterWindowMask
+    当鼠标指针进入我们控制的任何窗口时通知我们。
+LeaveWindowMask
+    当鼠标指针离开我们控制的任何窗口时通知我们。
+要在我们的事件循环swtich中检查的事件型别是以下的这些：
+
+EnterNotify
+    鼠标指针刚刚进入了我们控制的窗口
+LeaveNotify
+    鼠标指针刚刚离开了我们控制的窗口
+
+这些事件型别的事件结构是通过“an_event.xcrossing"来访问的，并且包含以下有趣的域
+：
+
+Window window
+    鼠标事件发送给的窗口的ID(如果我们的程序给几个程序注册了事件)。
+Window subwindow
+    鼠标进入到我们的窗口(在EnterNotify事件中)，或者鼠标指针移出到的子窗口ID(在Le
+aveNotify事件中)，或者两者均否，如果鼠标从我们的窗口外边移入。
+int x, y
+    事件产生的时候，鼠标指针以窗口的左上角为原点的x和y坐标(象素为单位)。
+int mode
+    鼠标指针点击的编号。可能是如Button1, Button2, Button3这样的值。
+Time time
+    事件发生的时间(毫秒为单位)。可能用于在程序中计算”双击“的情况(例如，如果鼠
+标按钮在小于给定时间内被点击两次，就认定这个为双击)。
+unsigned int state
+    A mask of the buttons (or keys) held down during this event - if any. This f
+ield is a bitwise OR of any of the following:
+  # Button1Mask
+  # Button2Mask
+  # Button3Mask
+  # Button4Mask
+  # Button5Mask
+  # ShiftMask
+  # LockMask
+  # ControlMask
+  # Mod1Mask
+  # Mod2Mask
+  # Mod3Mask
+  # Mod4Mask
+  # Mod5Mask
+    Their names are self explanatory, where the first 5 refer to mouse buttons t
+hat are being pressed, while the rest refer to various "special keys" that are b
+eing pressed (Mod1 is usually the 'ALT' key or the 'META' key).
+Bool focus
+    如果窗口拥有键盘焦点，设置为真。否则反之。
+
+键盘焦点
+屏幕上有许多窗口，但是仅仅有一个键盘和他附着。X服务器如何知道键盘输入是发送给哪
+个窗口的呢？这个是通过键盘焦点来完成的。在给定的时间，屏幕上只有一个窗口能够有键
+盘焦点。存在Xlib函数来使得程序给某个窗口设置键盘焦点。用户通常能够使用窗口管理器
+来安排键盘焦点(通常是通过点击所需窗口的标题栏)。一旦我们的窗口拥有了键盘焦点，每
+个键的按下和放开都将导致事件发送给我们的程序(如果它注册了这些事件类型...)。
+
+键盘按下和释放事件
+
+如果由我们程序控制的窗口当前保有键盘焦点，它能够接收键的按下和释放事件。为了注册
+这些事件，下面的遮罩要加到XSelectInput()的调用中去：
+
+KeyPressMask
+    Notify our program when a key was pressed while any of its controlled window
+s had the keyboard focus.
+KeyPressMask
+    Notify our program when a key was released while any of its controlled windo
+ws had the keyboard focus.
+
+The event types to be checked for in our event-loop switch, are any of the follo
+wing:
+
+KeyPress
+    A key was just pressed on the keyboard while any of our windows had the keyb
+oard focus.
+KeyRelease
+    A key was just released on the keyboard while any of our windows had the key
+board focus.
+
+The event structure for these event types is accessed as "an_event.xkey", and co
+ntains the following interesting fields:
+
+Window window
+    The ID of the window this button event was sent for (in case our application
+ registered for events on several windows).
+unsigned int keycode
+    The code of the key that was pressed (or released). This is some internal X
+code, that should be translated into a key symbol, as will be explained below.
+int x, y
+    The x and y coordinates (in pixels) from the top-left of the window, of the
+mouse pointer, when the event was generated.
+Time time
+    time (in millisecond) the event took place in. May be used to calculate "dou
+ble-click" situations by an application (e.g. if the mouse button was clicked tw
+o times in a duration shorter than a given amount, assume this was a double-clic
+k).
+unsigned int state
+    A mask of the buttons (or modifier keys) held down during this event - if an
+y. This field is a bitwise OR of any of the following:
+  # Button1Mask
+  # Button2Mask
+  # Button3Mask
+  # Button4Mask
+  # Button5Mask
+  # ShiftMask
+  # LockMask
+  # ControlMask
+  # Mod1Mask
+  # Mod2Mask
+  # Mod3Mask
+  # Mod4Mask
+  # Mod5Mask
+    Their names are self explanatory, where the first 5 refer to mouse buttons t
+hat are being pressed, while the rest refer to various "special keys" that are b
+eing pressed (Mod1 is usually the 'ALT' key or the 'META' key).
+
+如果我们提到过的，按键代码于其本身是相当没有意义的，并且是受到了附着于运行X服务
+器的机器的键盘设备的影响。为了真正使用这些代码，我们要把他们翻译为按键符号，它们
+是标准的。我们能用XKeycodeToKeysym()函数来完成翻译工作。这个函数需要3个参数：只
+想display的指针，要翻译的按键代码，和一个索引(我们将用‘0’来作这个参数)。标准Xl
+ib案件代码可以在”X11/keysymdef.h“中找到。作为一个使用键按下事件和XKeycodeToKey
+sym函数的例子，我们将展示如何处理这种的按键：按下‘1’将导致鼠标当前所在的点涂黑
+。按下DEL键将导致点的擦除(使用‘gc_erase’GC)。按下任何字母(a到z，大写或者小写)
+将使得他们显示在标准输出上。任何其他键的按下都被忽略。假定下面的‘case’是事件循
+环的switch语句的一部分。
+
+  case KeyPress:
+    /* store the mouse button coordinates in 'int' variables. */
+    /* also store the ID of the window on which the mouse was */
+    /* pressed.                                               */
+    x = an_event.xkey.x;
+    y = an_event.xkey.y;
+    the_win = an_event.xkey.window;
+    {
+        /* translate the key code to a key symbol. */
+        KeySym key_symbol = XKeycodeToKeysym(display, an_event.xkey.keycode, 0);
+        switch (key_symbol) {
+            case XK_1:
+            case XK_KP_1: /* '1' key was pressed, either the normal '1', or */
+                          /* the '1' on the keypad. draw the current pixel. */
+                XDrawPoint(display, the_win, gc_draw, x, y);
+                break;
+            case XK_Delete: /* DEL key was pressed, erase the current pixel. */
+                XDrawPoint(display, the_win, gc_erase, x, y);
+                break;
+            default:  /* anything else - check if it is a letter key */
+                if (key_symbol >= XK_A && key_symbol <= XK_Z) {
+                    int ascii_key = key_symbol - XK_A + 'A';
+                    printf("Key pressed - '%c'\n", ascii_key);
+                }
+                if (key_symbol >= XK_a && key_symbol <= XK_z) {
+                    int ascii_key = key_symbol - XK_a + 'a';
+                    printf("Key pressed - '%c'\n", ascii_key);
+                }
+                break;
+        }
+    }
+    break;
+如你所见，按键符号以某种方法与键盘上的屋里按键对应，因而你应当谨慎以恰当检查到所
+有的可能情况(如我们在上面例子中对‘1’所作的那样)。我们假定字母键有连续的符号值
+，否则范围检查的技巧与按键符号到ASCII代码之间的翻译将不能正常工作。
+
+X Events - A Complete Example
+X Events - 一个完整的例子
+
+作为一个处理事件的例子，我们将展示events.c程序。这个程序创建一个窗口，在其上作一
+些绘画，然后进入事件循环。如果它得到一个暴露时间 － 它重画整个窗口。如果它得到一
+个左键按下(或者移动)事件，它用白色画在鼠标指针下面的点(也就是说擦除这个点)。应当
+注意这些画面的改变是怎么被处理的。仅仅用恰当的颜色画出点是不够的。我们需要注意到
+颜色的改变，因而下一个暴露事件我们将能够再用合适的颜色画点。就这个目的，我们使用
+一个巨大的(1000乘1000)数组代表窗口的点。初始时，数组中的所有的元素被初始化为‘0
+’。当以黑色画点的时候，我们设置相应的数组元素为‘1’。当以白色画点的时候我们设
+置相应的数组元素为‘－1’。我们不能仅仅把他们重新设置为‘0’，否则我们原来画在屏
+幕上的东西总是会被擦除。最终，当用户按下键盘的任意键，程序退出。
+
+当运行这个程序时，你应注意到移动事件常常漏掉点。 如果鼠标快速从一个点移到另一个
+点，我们将不会在某个鼠标指针移过的点处得到移动事件。因而，如果我们故意好好处理这
+些间隙，我们也许需要记住上次移动事件发生的位置，然后再那个地点和下一个移动事件的
+地点之间画一条线。这就是绘画程序通常干的事情。
