@@ -1,0 +1,101 @@
+语法： this(参数列表)
+
+ 
+
+作用：
+
+   使用this调用另一个重载的构造器只能在构造器中使用，且必须作为构造器执行体的第一条语句。使用this调用重载的构造器时，系统根据this括号中的实际参数调用与之对应的形式参数列表的重载构造器。首先这样可以少些代码，其次当一个构造器中的代码修改后，不需要修改其他重载构造器中的代码。
+
+软件程序规则：不要把相同的代码书写两次以上。
+
+ 
+
+例子：
+
+ 
+
+ 
+
+public class ConstructorTest
+
+{
+
+         publicString name;
+
+         publicint count;
+
+         publicdouble weight;
+
+ 
+
+         publicConstructorTest(String name)
+
+         {
+
+                   this.name= name;
+
+         }
+
+ 
+
+         publicConstructorTest(String name, int count)
+
+         {
+
+                   this(name);               //调用形式参数列表为name的重载构造器初始化代码。
+
+                   this.count= count;
+
+         }
+
+ 
+
+         publicConstructorTest(String name, int count, double weight)
+
+         {
+
+                   this(name,count);           //调用形式参数列表为name,count的重载构造器初始化代码。
+
+                   this.weight= weight;
+
+         }
+
+ 
+
+         publicstatic void main(String[] args)
+
+         {
+
+                   ConstructorTestcon = new ConstructorTest("Nina");
+
+                   System.out.println(con.name);
+
+                  System.out.println(con.count);
+
+                   System.out.println(con.weight);
+
+                   System.out.println("");
+
+ 
+
+                   ConstructorTestcon1 = new ConstructorTest("Fengqiang",333);
+
+                   System.out.println(con1.name);
+
+                   System.out.println(con1.count);
+
+                   System.out.println(con1.weight);
+
+                   System.out.println("");
+
+ 
+
+                   ConstructorTestcon2 = new ConstructorTest("okay",333,1.2345);
+
+                   System.out.println(con2.name);
+
+                   System.out.println(con2.count);
+
+                   System.out.println(con2.weight);
+
+         }
