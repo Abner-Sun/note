@@ -1,0 +1,98 @@
+gcc 0长数组学习
+
+首先，我们要知道，0长度的数组在ISO C和C++的规格说明书中是不允许的。这也就是为什么在VC++2012下编译你会得到一个警告：“warning C4200: 使用了非标准扩展 : 结构/联合中的零大小数组”。
+
+那么为什么gcc可以通过而连一个警告都没有？那是因为gcc 为了预先支持C99的这种玩法，所以，让“零长度数组”这种玩法合法了。关于GCC对于这个事的文档在这里：“Arrays of Length Zero”，文档中给了一个例子（我改了一下，改成可以运行的了）：
+
+复制代码
+#include <stdlib.h>
+#include <string.h>
+ 
+struct line {
+   int length;
+   char contents[0]; // C99的玩法是：char contents[]; 没有指定数组长度
+};
+ 
+int main(){
+    int this_length=10;
+    struct line *thisline = (struct line *)
+                     malloc (sizeof (struct line) + this_length);
+    thisline->length = this_length;
+    memset(thisline->contents, 'a', this_length);
+    return 0;
+}
+复制代码
+ 
+
+上面这段代码的意思是：我想分配一个不定长的数组，于是我有一个结构体，其中有两个成员，一个是length，代表数组的长度，一个是contents，代码数组的内容。后面代码里的 this_length（长度是10）代表是我想分配的数据的长度。（这看上去是不是像一个C++的类？）这种玩法英文叫：Flexible Array，中文翻译叫：柔性数组。
+
+我们来用gdb看一下：
+
+复制代码
+(gdb) p thisline
+$1 = (struct line *) 0x601010
+ 
+(gdb) p *thisline
+$2 = {length = 10, contents = 0x601010 "\n"}
+ 
+(gdb) p thisline->contents
+$3 = 0x601014 "aaaaaaaaaa"
+复制代码
+ 
+
+我们可以看到：在输出*thisline时，我们发现其中的成员变量contents的地址居然和thisline是一样的（偏移量为0×0??!!）。但是当我们输出thisline->contents的时候，你又发现contents的地址是被offset了0×4了的，内容也变成了10个‘a’。（我觉得这是一个GDB的bug，VC++的调试器就能很好的显示）
+
+我们继续，如果你sizeof(char[0])或是 sizeof(int[0]) 之类的零长度数组，你会发现sizeof返回了0，这就是说，零长度的数组是存在于结构体内的，但是不占结构体的size。你可以简单的理解为一个没有内容的占位标识，直到我们给结构体分配了内存，这个占位标识才变成了一个有长度的数组。
+
+看到这里，你会说，为什么要这样搞啊，把contents声明成一个指针，然后为它再分配一下内存不行么？就像下面一样。
+
+复制代码
+struct line {
+   int length;
+   char *contents;
+};
+ 
+int main(){
+    int this_length=10;
+    struct line *thisline = (struct line *)malloc (sizeof (struct line));
+    thisline->contents = (char*) malloc( sizeof(char) * this_length );
+    thisline->length = this_length;
+    memset(thisline->contents, 'a', this_length);
+    return 0;
+}
+复制代码
+ 
+
+这不一样清楚吗？而且也没什么怪异难懂的东西。是的，这也是普遍的编程方式，代码是很清晰，也让人很容易理解。即然这样，那为什么要搞一个零长度的数组？有毛意义？！
+
+这个事情出来的原因是——我们想给一个结构体内的数据分配一个连续的内存！这样做的意义有两个好处：
+
+第一个意义是，方便内存释放。如果我们的代码是在一个给别人用的函数中，你在里面做了二次内存分配，并把整个结构体返回给用户。用户调用free可以释放结构体，但是用户并不知道这个结构体内的成员也需要free，所以你不能指望用户来发现这个事。所以，如果我们把结构体的内存以及其成员要的内存一次性分配好了，并返回给用户一个结构体指针，用户做一次free就可以把所有的内存也给释放掉。（读到这里，你一定会觉得C++的封闭中的析构函数会让这事容易和干净很多）
+
+第二个原因是，这样有利于访问速度。连续的内存有益于提高访问速度，也有益于减少内存碎片。（其实，我个人觉得也没多高了，反正你跑不了要用做偏移量的加法来寻址）
+
+我们来看看是怎么个连续的，用gdb的x命令来查看：(我们知道，用struct line {}中的那个char contents[]不占用结构体的内存，所以，struct line就只有一个int成员，4个字节，而我们还要为contents[]分配10个字节长度，所以，一共是14个字节)
+
+(gdb) x /14b thisline
+0x601010:       10      0       0       0       97      97      97      97
+0x601018:       97      97      97      97      97      97
+ 
+
+从上面的内存布局我们可以看到，前4个字节是 int length，后10个字节就是char contents[]。
+
+如果用指针的话，会变成这个样子：
+
+(gdb) x /16b thisline
+0x601010:       1       0       0       0       0       0       0       0
+0x601018:       32      16      96      0       0       0       0       0
+(gdb) x /10b this->contents
+0x601020:       97      97      97      97      97      97      97      97
+0x601028:       97      97
+ 
+
+上面一共输出了四行内存，其中，
+
+第一行前四个字节是 int length，第一行的后四个字节是对齐。
+第二行是char* contents，64位系统指针8个长度，他的值是0×20 0×10 0×60 也就是0×601020。
+第三行和第四行是char* contents指向的内容。
+从这里，我们看到，其中的差别——数组的原地就是内容，而指针的那里保存的是内容的地址。

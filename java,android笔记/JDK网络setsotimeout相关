@@ -1,0 +1,198 @@
+Socket 关于设置Socket连接超时时间
+
+做网络编程的人对setSoTimeout方法一定很熟悉，都知道是设置连接的超时时间！
+但是我在网上找资料时发现很多人把这个超时时间理解成了链路的超时时间！我看了一下JDK 关于这个方法的说明，其实根本不是链路的超时时间！
+ 
+Java代码  收藏代码
+setSoTimeout  
+public void setSoTimeout(int timeout)  
+    throws SocketException启用/禁用带有指定超时值的 SO_TIMEOUT，以毫秒为单位。将此选项设为非零的超时值时，在与此 Socket 关联的 InputStream 上调用 read() 将只阻塞此时间长度。  
+    如果超过超时值，将引发 java.net.SocketTimeoutException，虽然 Socket 仍旧有效。选项必须在进入阻塞操作前被启用才能生效。  
+    超时值必须是 > 0 的数。超时值为 0 被解释为无穷大超时值。   
+参数：  
+timeout - 指定的以毫秒为单位的超时值。   
+抛出：   
+SocketException - 如果底层协议出现错误，例如 TCP 错误。  
+从以下版本开始：   
+JDK 1.1   
+另请参见：  
+getSoTimeout()  
+ 
+其实说白了他只是read方法的超时时间，这个方法是堵塞的！
+ 
+写个小例子验证一下：
+服务端，收到一个请求后处理，但是只处理一个请求，处理完毕后结束：
+Java代码  收藏代码
+package socket;  
+import java.io.ByteArrayOutputStream;  
+import java.io.InputStream;  
+import java.net.InetSocketAddress;  
+import java.net.ServerSocket;  
+import java.net.Socket;  
+import java.net.SocketAddress;  
+import java.net.SocketException;  
+import java.net.SocketTimeoutException;  
+import java.text.SimpleDateFormat;  
+import java.util.Arrays;  
+import java.util.Date;  
+public class SocketService {  
+    public static void main(String[] args) {  
+        try {  
+            SocketAddress address = new InetSocketAddress("192.168.9.155", 30001);  
+            // 启动监听端口 8001  
+            ServerSocket ss = new ServerSocket();  
+            ss.bind(address);  
+            // 接收请求  
+            Socket s = ss.accept();  
+            new Thread(new T(s)).start();  
+        } catch (Exception e) {  
+            e.printStackTrace();  
+        }  
+    }  
+}  
+class T implements Runnable {  
+    public void run() {  
+        try {  
+            System.out.println(socket.toString());  
+            socket.setKeepAlive(true);  
+            socket.setSoTimeout(5 * 1000);  
+            String _pattern = "yyyy-MM-dd HH:mm:ss";  
+            SimpleDateFormat format = new SimpleDateFormat(_pattern);  
+            while (true) {  
+                System.out.println("开始：" + format.format(new Date()));  
+                try {  
+                    InputStream ips = socket.getInputStream();  
+                    ByteArrayOutputStream bops = new ByteArrayOutputStream();  
+                    int data = -1;  
+                    while((data = ips.read()) != -1){  
+                        System.out.println(data);  
+                        bops.write(data);  
+                    }  
+                    System.out.println(Arrays.toString(bops.toByteArray()));  
+                }catch(SocketTimeoutException e){  
+                    e.printStackTrace();  
+                }catch(SocketException e){  
+                    e.printStackTrace();  
+                } catch (Exception e) {  
+                    e.printStackTrace();  
+                }  
+                Thread.sleep(1000);  
+                System.out.println(socket.isBound()); // 是否邦定  
+                System.out.println(socket.isClosed()); // 是否关闭  
+                System.out.println(socket.isConnected()); // 是否连接  
+                System.out.println(socket.isInputShutdown()); // 是否关闭输入流  
+                System.out.println(socket.isOutputShutdown()); // 是否关闭输出流  
+                System.out.println("结束：" + format.format(new Date()));  
+            }  
+        } catch (Exception e) {  
+            e.printStackTrace();  
+        }  
+    }  
+    private Socket socket = null;  
+    public T(Socket socket) {  
+        this.socket = socket;  
+    }  
+    public Socket getSocket() {  
+        return socket;  
+    }  
+    public void setSocket(Socket socket) {  
+        this.socket = socket;  
+    }  
+}  
+ 
+ 
+ 第一个客户端，连接后一直保持连接对象的存活，但是不发送数据，服务端打印：
+Java代码  收藏代码
+package socket;  
+import java.net.Socket;  
+public class Client {  
+    public static void main(String[] args) {  
+        try {  
+            Socket socket = new Socket("192.168.9.155", 30001);  
+            socket.setKeepAlive(true);  
+            while(true && null != socket){  
+                Thread.sleep(10 * 1000);  
+            }  
+        } catch (Exception e) {  
+            e.printStackTrace();  
+        }  
+    }  
+}  
+ 
+打印如下，可以看到链路一直是活的，间隔超时时间的间隔就打印一组异常信息： 
+ 
+Java代码  收藏代码
+Socket[addr=/192.168.9.155,port=3017,localport=30001]  
+开始：2012-11-14 11:15:30  
+java.net.SocketTimeoutException: Read timed out  
+    at java.net.SocketInputStream.socketRead0(Native Method)  
+    at java.net.SocketInputStream.read(Unknown Source)  
+    at java.net.SocketInputStream.read(Unknown Source)  
+    at socket.T.run(SocketService.java:42)  
+    at java.lang.Thread.run(Unknown Source)  
+true  
+false  
+true  
+false  
+false  
+结束：2012-11-14 11:15:36  
+开始：2012-11-14 11:15:36  
+java.net.SocketTimeoutException: Read timed out  
+    at java.net.SocketInputStream.socketRead0(Native Method)  
+    at java.net.SocketInputStream.read(Unknown Source)  
+    at java.net.SocketInputStream.read(Unknown Source)  
+    at socket.T.run(SocketService.java:42)  
+    at java.lang.Thread.run(Unknown Source)  
+true  
+false  
+true  
+false  
+false  
+结束：2012-11-14 11:15:42  
+开始：2012-11-14 11:15:42  
+  
+ 然后我们编写一个客户端，连接后马上关闭连接，也不发送任何数据：
+Java代码  收藏代码
+package socket;  
+import java.net.Socket;  
+public class Client {  
+    public static void main(String[] args) {  
+        try {  
+            Socket socket = new Socket("192.168.9.155", 30001);  
+            socket.setKeepAlive(true);  
+        } catch (Exception e) {  
+            e.printStackTrace();  
+        }  
+    }  
+}  
+ 
+打印如下：
+Java代码  收藏代码
+开始：2012-11-14 11:17:42  
+java.net.SocketException: Connection reset  
+    at java.net.SocketInputStream.read(Unknown Source)  
+    at java.net.SocketInputStream.read(Unknown Source)  
+    at socket.T.run(SocketService.java:42)  
+    at java.lang.Thread.run(Unknown Source)  
+true  
+false  
+true  
+false  
+false  
+java.net.SocketException: Connection reset  
+    at java.net.SocketInputStream.read(Unknown Source)  
+    at java.net.SocketInputStream.read(Unknown Source)  
+    at socket.T.run(SocketService.java:42)  
+    at java.lang.Thread.run(Unknown Source)  
+结束：2012-11-14 11:17:43  
+开始：2012-11-14 11:17:43  
+true  
+false  
+true  
+false  
+false  
+结束：2012-11-14 11:17:44  
+ 
+异常是不一样的，不一样的还有，如果是超时，则五秒钟循环一次，然后是连接中断，则不在循环马上再报错，因为连接已经挂了！但是打印这个连接还是有效的，这个我也不知道怎么回事！
+ 
+所以，如果大家理解为超时时间内没有数据连接就自动关闭或失效，那么这个理解就非常有问题了！

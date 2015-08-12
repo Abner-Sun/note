@@ -1,0 +1,65 @@
+HTTP断点续传的基本原理
+断点续传是我们现在经常接触的概念，那么HTTP协议是如何支持断点续传的呢。我们先从一个例子来看看。
+
+下面是一个断点续传的例子：（使用Net Vampire得到）
+
+I 01-7-12 19:19:23 ------------------------- Attempt 1 ------------------------- 
+P 01-7-12 19:19:24 Connecting to 127.0.0.3 ... 
+P 01-7-12 19:19:24 Connected to 127.0.0.3 [127.0.0.3] 
+S 01-7-12 19:19:24 GET /VS0515AI.EXE HTTP/1.1 
+S 01-7-12 19:19:24 Connection: close 
+S 01-7-12 19:19:24 Host: 127.0.0.3 
+S 01-7-12 19:19:24 Accept: */* 
+S 01-7-12 19:19:24 Pragma: no-cache 
+S 01-7-12 19:19:24 Cache-Control: no-cache 
+S 01-7-12 19:19:24 Referer: http://127.0.0.3/ 
+S 01-7-12 19:19:24 User-Agent: Mozilla/4.04 [en] (Win95; I ;Nav) 
+S 01-7-12 19:19:24 
+R 01-7-12 19:19:24 HTTP/1.1 200 OK 
+R 01-7-12 19:19:24 Server: Zero Http Server/1.0 
+R 01-7-12 19:19:24 Date: Thu, 12 Jul 2001 11:19:24 GMT 
+R 01-7-12 19:19:24 Cache-Control: no-cache 
+R 01-7-12 19:19:24 Last-Modified: Tue, 30 Jan 2001 13:11:30 GMT 
+R 01-7-12 19:19:24 Content-Type: application/octet-stream 
+R 01-7-12 19:19:24 Content-Length: 15143086 
+R 01-7-12 19:19:24 Connection: close 
+R 01-7-12 19:19:24 
+P 01-7-12 19:19:25 Data transfer started 
+I 01-7-12 19:19:32 Job Stopped by user 
+I 01-7-12 19:19:33 Received 5 275 648 bytes in 0:00:07 (691 435 bytes/s)
+
+ 
+
+I 01-7-12 19:19:40 ------------------------- Attempt 2 ------------------------- 
+P 01-7-12 19:19:40 Connecting to 127.0.0.3 ... 
+P 01-7-12 19:19:40 Connected to 127.0.0.3 [127.0.0.3] 
+S 01-7-12 19:19:40 GET /VS0515AI.EXE HTTP/1.1 
+S 01-7-12 19:19:40 Connection: close 
+S 01-7-12 19:19:40 Host: 127.0.0.3 
+S 01-7-12 19:19:40 Accept: */* 
+S 01-7-12 19:19:40 Pragma: no-cache 
+S 01-7-12 19:19:40 Cache-Control: no-cache 
+S 01-7-12 19:19:40 Referer: http://127.0.0.3/ 
+S 01-7-12 19:19:40 User-Agent: Mozilla/4.04 [en] (Win95; I ;Nav) 
+S 01-7-12 19:19:40 Range: bytes=5275648- 
+S 01-7-12 19:19:40 
+R 01-7-12 19:19:40 HTTP/1.1 206 Partial Content 
+R 01-7-12 19:19:40 Server: Zero Http Server/1.0 
+R 01-7-12 19:19:40 Date: Thu, 12 Jul 2001 11:19:40 GMT 
+R 01-7-12 19:19:40 Cache-Control: no-cache 
+R 01-7-12 19:19:40 Last-Modified: Tue, 30 Jan 2001 13:11:30 GMT 
+R 01-7-12 19:19:40 Content-Type: application/octet-stream 
+R 01-7-12 19:19:40 Content-Range: bytes 5275648-15143085/15143086 
+R 01-7-12 19:19:40 Content-Length: 9867438 
+R 01-7-12 19:19:40 Connection: close 
+R 01-7-12 19:19:40 
+P 01-7-12 19:19:40 Data transfer started 
+I 01-7-12 19:19:41 Job Stopped by user 
+I 01-7-12 19:19:41 Received 1 124 756 bytes in 0:00:01 (969 617 bytes/s)
+
+ 
+
+第一次是普通的传输；第二次由于没有传完全，就发出了Range这个头部，从5275648字节开始传输（默认是按字节算），回应使用206状态值，表示现在开始部分传输，回复Content-Length头部，表示传输的部分，用字节记，然后就与普通传输没有区别了。
+
+
+也就是说，只有在请求报头设置了Range字段的情况下，响应报头才会回发content-range字段，来支持断点续传。
